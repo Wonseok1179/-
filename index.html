@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>셰익스피어 유니버스: 비극의 재구성</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(0.98); }
+    }
+    .animate-ghost {
+      animation: pulse-subtle 2.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 antialiased p-4 sm:p-8 select-none flex items-center justify-center min-h-screen">
+  <div class="max-w-md w-full bg-slate-800 text-slate-100 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-sans" style="height: 540px;">
+    
+    <!-- Top Bar: ShakeTalk App Header -->
+    <div class="bg-slate-900 border-b border-slate-700 px-4 py-3 flex items-center justify-between shrink-0">
+      <div class="flex items-center space-x-2.5">
+        <div class="relative">
+          <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs border border-indigo-500/40">
+            👑
+          </div>
+          <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-900"></span>
+        </div>
+        <div>
+          <div class="flex items-center space-x-1.5">
+            <span class="font-bold text-sm tracking-tight text-slate-100">슼톡 · 덴마크 왕립 단톡방</span>
+            <span class="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-medium border border-amber-500/30">제1장</span>
+          </div>
+          <p class="text-[11px] text-slate-400">참여: 햄릿(나), 호레이쇼, [유령?]</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button id="resetBtn" class="text-xs px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition border border-slate-600">
+          ↺ 초기화
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Gauge Bar -->
+    <div class="bg-slate-900/50 px-3 py-2 border-b border-slate-700 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
+      <div class="flex items-center space-x-2">
+        <span>멘탈</span>
+        <div class="w-16 bg-slate-700 rounded-full h-1.5 overflow-hidden">
+          <div id="mentalBar" class="bg-indigo-400 h-full transition-all duration-500" style="width: 45%;"></div>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <span>비극 지수</span>
+        <div class="w-16 bg-slate-700 rounded-full h-1.5 overflow-hidden">
+          <div id="tragedyBar" class="bg-rose-500 h-full transition-all duration-500" style="width: 80%;"></div>
+        </div>
+      </div>
+      <span id="rootIndicator" class="font-semibold text-amber-400">루트 탐색중</span>
+    </div>
+
+    <!-- Chat Message Area -->
+    <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-900/30 text-xs">
+      <!-- Message 1 -->
+      <div class="flex items-start space-x-2">
+        <div class="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-xs shrink-0 border border-blue-500/30">📜</div>
+        <div class="max-w-[80%]">
+          <div class="text-[10px] text-slate-400 mb-0.5 font-medium">호레이쇼 (과동기)</div>
+          <div class="bg-slate-700 border border-slate-600 rounded-2xl rounded-tl-sm p-2.5 text-slate-100 shadow-sm leading-relaxed">
+            야 햄릿아 큰일남ㄷㄷ 성곽 보초 서던 애들이 느그 아부지 귀신 봤대;;
+          </div>
+        </div>
+      </div>
+
+      <!-- Message 2 -->
+      <div class="flex items-start justify-end space-x-2">
+        <div class="max-w-[80%] text-right">
+          <div class="text-[10px] text-slate-400 mb-0.5 font-medium">햄릿 (나)</div>
+          <div class="bg-indigo-600 text-white rounded-2xl rounded-tr-sm p-2.5 text-left shadow-sm leading-relaxed">
+            아 억까 ㄴㄴ 기말고사 과제 벼락치기 하다가 헛것 본 거 아님?
+          </div>
+        </div>
+      </div>
+
+      <!-- Ghost AirDrop Event -->
+      <div class="p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/40 animate-ghost">
+        <div class="flex items-center justify-between text-purple-300 font-semibold mb-1">
+          <span class="flex items-center gap-1.5">👻 선왕 유령의 AirDrop 요청</span>
+          <span class="text-[10px] text-purple-400">수신 대기중</span>
+        </div>
+        <p class="text-[11px] text-purple-200/90 leading-snug">
+          "아들아... 네 삼촌 클로디어스가 내 귀에 뱀 독약을 들이부었다. 내 복수를 해다오..."
+        </p>
+      </div>
+
+      <!-- Dynamic Messages will be injected here -->
+      <div id="dynamicMessages" class="space-y-3"></div>
+    </div>
+
+    <!-- Choice & Action Bar -->
+    <div id="choiceSection" class="p-3 bg-slate-900 border-t border-slate-700 shrink-0">
+      <div class="text-[11px] font-semibold text-slate-400 mb-2 flex items-center justify-between">
+        <span>⚡ 햄릿의 선택 (갈등 분기점)</span>
+        <span class="text-[10px] text-indigo-400">1가지를 선택하세요</span>
+      </div>
+      <div class="grid grid-cols-3 gap-1.5">
+        <button onclick="selectBranch('classic')" class="p-2 rounded-xl border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500/25 transition text-left flex flex-col justify-between group">
+          <div class="font-bold text-indigo-300 text-[11px] group-hover:text-indigo-200">① 원작 루트</div>
+          <div class="text-[10px] text-slate-400 mt-0.5 line-clamp-1">"미친 척 연기하며 각 잰다"</div>
+        </button>
+
+        <button onclick="selectBranch('cider')" class="p-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/25 transition text-left flex flex-col justify-between group">
+          <div class="font-bold text-emerald-300 text-[11px] group-hover:text-emerald-200">② 사이다 루트</div>
+          <div class="text-[10px] text-slate-400 mt-0.5 line-clamp-1">"에타·인스타 라방 폭로"</div>
+        </button>
+
+        <button onclick="selectBranch('meme')" class="p-2 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/25 transition text-left flex flex-col justify-between group">
+          <div class="font-bold text-amber-300 text-[11px] group-hover:text-amber-200">③ 병맛 개그 루트</div>
+          <div class="text-[10px] text-slate-400 mt-0.5 line-clamp-1">"오은영 박사님 긴급 섭외"</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Educational Fact-Check Banner (Reveals on choice) -->
+    <div id="factCheckDrawer" class="hidden p-2.5 bg-amber-950/40 border-t border-amber-500/30 text-amber-200 text-xs shrink-0 flex items-center justify-between">
+      <div class="flex items-center space-x-2 truncate">
+        <span class="text-base">📖</span>
+        <div class="truncate">
+          <span class="font-bold text-amber-300">원작 팩트체크:</span>
+          <span id="factText" class="text-[11px] text-amber-100/90 ml-1">셰익스피어 1막 5장의 고뇌 모티프</span>
+        </div>
+      </div>
+      <button onclick="toggleModal()" class="shrink-0 text-[10px] bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 px-2 py-1 rounded border border-amber-500/40 font-medium">
+        상세 해설
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Modal for Literature Annotation -->
+  <div id="factModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-sm w-full p-4 shadow-2xl space-y-3 text-xs text-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+        <span class="font-bold text-sm text-slate-100 flex items-center gap-1.5">🎓 셰익스피어 교양 백과</span>
+        <button onclick="toggleModal()" class="text-lg text-slate-400 hover:text-white">&times;</button>
+      </div>
+      <div id="modalBody" class="space-y-2 text-slate-300 leading-relaxed">
+        <!-- Content will be updated by JS -->
+      </div>
+      <div class="pt-1">
+        <button onclick="toggleModal()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition text-xs">
+          확인 완료 (지식 +10 EXP)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const branches = {
+      classic: {
+        title: "원작 정통 비극 루트",
+        mental: 20,
+        tragedy: 95,
+        messages: [
+          { sender: 'me', text: '일단 당장 칼 뽑진 말고, 미친 척 연기하면서 연극 하나 올려서 삼촌 동공 흔들리는지 각 재본다.' },
+          { sender: 'horatio', text: '역시 철학과 대학원생 클라스... 굳이 돌아가는 각? 오필리어 멘탈부터 챙겨라;;' },
+          { sender: 'system', text: '💀 [결말 요약] 우유부단함(Hamartia)의 폭풍 속에서 커튼 뒤 폴로니어스를 찌르고, 결투 독검에 찔려 왕실 전원 전멸 엔딩 직행!' }
+        ],
+        factSummary: "1막 5장 '시대가 미쳐 날뛰는구나(The time is out of joint)' 고뇌",
+        factDetail: `
+          <p class="font-semibold text-indigo-400">📜 원작 포인트: '햄릿의 우유부단함 (Hamartia)'</p>
+          <p>원작에서 햄릿은 유령의 말을 바로 믿지 않고 진실을 시험하기 위해 연극 [곤자가의 암살]을 올립니다. 이러한 비극적 결함(성격적 지체)이 바로 문학사에서 가장 유명한 햄릿형 인간의 표본입니다.</p>
+          <blockquote class="border-l-2 border-indigo-400 pl-2 italic text-[11px] text-slate-100">
+            "The time is out of joint; O cursed spite, That ever I was born to set it right!"
+          </blockquote>
+        `
+      },
+      cider: {
+        title: "사이다 현대 폭로 루트",
+        mental: 85,
+        tragedy: 15,
+        messages: [
+          { sender: 'me', text: '아빠 녹취록이랑 증거물 당장 왕실 에타에 올리고 인스타 라방 켜서 전국에 깐다.' },
+          { sender: 'horatio', text: '미쳤다ㅋㅋ 벌써 동시시청자 50만 찍음 삼촌 청문회 소환 각 뜸ㅋㅋㅋㅋ' },
+          { sender: 'system', text: '🎉 [결말 요약] 클로디어스 특검 즉각 구속! 햄릿은 왕위 승계 대신 1000만 유튜버로 전향하여 오필리어와 꽃길 엔딩!' }
+        ],
+        factSummary: "현대 법치주의 vs 르네상스 군주정의 사적 복수 대조",
+        factDetail: `
+          <p class="font-semibold text-emerald-400">⚖️ 현대적 재해석: '사적 제재 vs 공적 공론화'</p>
+          <p>셰익스피어 시대의 비극은 법적 구제 수단이 없는 절대군주정 하에서 '사적 복수의 딜레마'를 다룹니다. 현대 미디어 환경이었다면 햄릿의 고뇌는 폭로와 여론 재판으로 단 3분 만에 해결되었을 것입니다.</p>
+        `
+      },
+      meme: {
+        title: "병맛 막장 힐링 루트",
+        mental: 99,
+        tragedy: 0,
+        messages: [
+          { sender: 'me', text: '귀신 말만 듣고 삼촌 잡을 순 없지. 부모 가족상담 전문가 모셔서 삼자대면 시킨다.' },
+          { sender: 'horatio', text: '엥? 성 안 대강당에 오은영 박사님 오셨는데 삼촌 지금 형 미안해 하면서 오열 중임 ㄷㄷ' },
+          { sender: 'system', text: '🕊️ [결말 요약] 삼촌은 셀프 수도원 입소, 거트루드 감동의 참회! 유령 아빠는 "아니 내 복수는...?" 하다가 성불 완료!' }
+        ],
+        factSummary: "가족 비극과 오이디푸스 콤플렉스 프로이트 심리학",
+        factDetail: `
+          <p class="font-semibold text-amber-400">🛋️ 심리학 포인트: '프로이트와 햄릿'</p>
+          <p>20세기 정신분석학자 프로이트는 햄릿이 삼촌을 쉽게 죽이지 못한 이유를 '자신이 무의식적으로 하고 싶었던 일(아버지를 치우고 어머니를 독점)'을 삼촌이 먼저 실행했기 때문이라고 해석했습니다. 심리 치료가 가장 시급했던 집안입니다!</p>
+        `
+      }
+    };
+
+    function selectBranch(key) {
+      const data = branches[key];
+      const container = document.getElementById('dynamicMessages');
+      container.innerHTML = '';
+
+      // Update gauges
+      document.getElementById('mentalBar').style.width = data.mental + '%';
+      document.getElementById('tragedyBar').style.width = data.tragedy + '%';
+      document.getElementById('rootIndicator').textContent = data.title;
+      document.getElementById('rootIndicator').className = 'font-semibold ' + (key === 'classic' ? 'text-indigo-400' : key === 'cider' ? 'text-emerald-400' : 'text-amber-400');
+
+      // Append messages
+      data.messages.forEach((msg) => {
+        const msgDiv = document.createElement('div');
+        if (msg.sender === 'me') {
+          msgDiv.className = 'flex items-start justify-end space-x-2';
+          msgDiv.innerHTML = `
+            <div class="max-w-[80%] text-right">
+              <div class="text-[10px] text-slate-400 mb-0.5 font-medium">햄릿 (나)</div>
+              <div class="bg-indigo-600 text-white rounded-2xl rounded-tr-sm p-2.5 text-left shadow-sm leading-relaxed">${msg.text}</div>
+            </div>`;
+        } else if (msg.sender === 'horatio') {
+          msgDiv.className = 'flex items-start space-x-2';
+          msgDiv.innerHTML = `
+            <div class="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-xs shrink-0 border border-blue-500/30">📜</div>
+            <div class="max-w-[80%]">
+              <div class="text-[10px] text-slate-400 mb-0.5 font-medium">호레이쇼</div>
+              <div class="bg-slate-700 border border-slate-600 rounded-2xl rounded-tl-sm p-2.5 text-slate-100 shadow-sm leading-relaxed">${msg.text}</div>
+            </div>`;
+        } else {
+          msgDiv.className = 'p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-center text-[11px] leading-relaxed font-medium';
+          msgDiv.innerHTML = msg.text;
+        }
+        container.appendChild(msgDiv);
+      });
+
+      // Update Fact Drawer
+      document.getElementById('factText').textContent = data.factSummary;
+      document.getElementById('modalBody').innerHTML = data.factDetail;
+      document.getElementById('factCheckDrawer').classList.remove('hidden');
+
+      // Auto scroll to bottom
+      const chat = document.getElementById('chatContainer');
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function toggleModal() {
+      const modal = document.getElementById('factModal');
+      modal.classList.toggle('hidden');
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      document.getElementById('dynamicMessages').innerHTML = '';
+      document.getElementById('mentalBar').style.width = '45%';
+      document.getElementById('tragedyBar').style.width = '80%';
+      document.getElementById('rootIndicator').textContent = '루트 탐색중';
+      document.getElementById('rootIndicator').className = 'font-semibold text-amber-400';
+      document.getElementById('factCheckDrawer').classList.add('hidden');
+    });
+  </script>
+</body>
+</html>
